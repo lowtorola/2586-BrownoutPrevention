@@ -1,0 +1,110 @@
+package frc.robot;
+
+
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+
+
+public class Robot extends TimedRobot {
+  AnalogInput pressureSensor;
+  Compressor comp;
+  int MAX_PSI = 110;
+  int MIN_PSI = 0;
+  int MAX_RAW = 2500;
+  int MIN_RAW = 400;
+  double PSI_PER_RAW = (double) MAX_PSI / MAX_RAW;
+  double currentPSI;
+  int raw;
+  boolean compControlMode = false;
+  Joystick operatorJoystick = new Joystick(0);
+  int switchComp = 2;
+  Timer compTimer;
+  boolean compTimerBool;
+  double Time = 120;
+  double batteryVoltage;
+  boolean checkBatteryVoltage;
+
+  @Override
+  public void robotInit() {
+    pressureSensor = new AnalogInput(0);
+    comp = new Compressor();
+    compTimer = new Timer();
+    compTimer.reset();
+    compTimer.start();
+    }
+
+
+    public void RobotTimer() {
+     if (compTimer.hasPeriodPassed(120)) {
+      checkBatteryVoltage = false;
+      batteryVoltage = RobotController.getBatteryVoltage();
+      SmartDashboard.putNumber("Battery Voltage", batteryVoltage);
+      SmartDashboard.putBoolean("Check Battery Voltage", checkBatteryVoltage);
+     }
+    }
+  @Override
+  public void autonomousInit() {
+  }
+
+  @Override
+  public void autonomousPeriodic() {
+  }
+
+  @Override
+  public void teleopInit() {
+  }
+
+  @Override
+  public void teleopPeriodic() {
+    // raw voltage from pressure sensor
+    raw = pressureSensor.getValue();
+    SmartDashboard.putNumber("Current Raw", raw);
+
+    currentPSI = rawToPSI(raw);
+    SmartDashboard.putNumber("Current PSI", currentPSI);
+    System.out.println(rawToPSI(raw));
+
+    compPowerRation();
+  }
+
+  // Quadratic equation to scale input volts to PSI
+  public double rawToPSI (double input) {
+    final double A_SCALER = Math.pow(10, -6);
+    final double A = -1.7325545 * A_SCALER;
+    double AX_SQUARED = A * (Math.pow(input, 2));
+    final double B = .05945597;
+    double BX = B * input;
+    final double C = -25.442403;
+    input = AX_SQUARED += BX += C;
+    return input;
+  }
+
+  }
+
+  public void toggleComp() {
+    if (operatorJoystick.getRawButton(7)) {
+      comp.start();
+    } else if (operatorJoystick.getRawButton(8)) {
+      comp.stop();
+    }
+  }
+  
+  // Controls when the compressor starts and stops
+ public void compPowerRation() {
+    if (currentPSI < 20) {
+      comp.start();
+    } else if (currentPSI > 30) {
+      comp.stop();
+    }
+  }
+
+  @Override
+  public void testPeriodic() {
+  }
+}
