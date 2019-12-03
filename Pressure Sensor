@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
     return input;
   }
 
-  }
+  
 
   public void toggleComp() {
     if (operatorJoystick.getRawButton(7)) {
